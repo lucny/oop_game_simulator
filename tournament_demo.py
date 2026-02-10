@@ -7,7 +7,7 @@ Načte hráče a odehraje turnaj s pokročilými funkcemi:
 """
 
 from game import load_players
-from tournament2 import Tournament, TournamentType
+from tournament import Tournament, TournamentType
 
 
 def main():
