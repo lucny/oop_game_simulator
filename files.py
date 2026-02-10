@@ -1,113 +1,135 @@
-import json, csv
+"""Modul pro práci se soubory (textové, JSON, CSV).
+
+Obsahuje funkce pro načítání a ukládání dat do různých formátů souborů:
+- textové soubory
+- JSON
+- CSV
+"""
+
+import json
+import csv
 
 
 def textfile_read(path, encoding='utf-8'):
-    '''Načtení textového souboru
+    """Načte obsah textového souboru.
 
-    Klíčové argumenty:
-        path -- cesta k textovému souboru
-        encoding -- kódování (výchozí utf-8)
-    '''
-    try:
-        with open(path, encoding=encoding) as file:
-            data = file.read()
-    except FileNotFoundError:
-        print(f'Soubor nebyl nalezen')
-        return False
-    except Exception as error:
-        print(f'Chyba načtení souboru: {error} {type(error)}')
-        return False
-    finally:
-        file.close()
-    return data
+    Args:
+        path (str): Cesta k textovému souboru.
+        encoding (str): Kódování souboru (výchozí: utf-8).
+
+    Returns:
+        str: Obsah souboru.
+
+    Raises:
+        FileNotFoundError: Pokud soubor neexistuje.
+        Exception: Pokud došlo k chybě při čtení.
+    """
+    with open(path, encoding=encoding) as file:
+        return file.read()
 
 
 def textfile_write(path, data='', encoding='utf-8'):
-    '''Uložení do textového souboru
+    """Uloží text do textového souboru.
 
-    Klíčové argumenty:
-        path -- cesta k textovému souboru
-        data -- ukládaný text (výchozí '')
-        encoding -- kódování (výchozí utf-8)
-    '''
-    try:
-        with open(path, mode='w', encoding=encoding) as file:
-            file.write(data)
-    except FileNotFoundError:
-        print(f'Soubor nebyl nalezen')
-        return False
-    except Exception as error:
-        print(f'Chyba zápisu do souboru: {error} {type(error)}')
-        return False
-    finally:
-        file.close()
-    return True
+    Args:
+        path (str): Cesta k textovému souboru.
+        data (str): Text k uložení (výchozí: '').
+        encoding (str): Kódování souboru (výchozí: utf-8).
+
+    Raises:
+        FileNotFoundError: Pokud není cesta platná.
+        Exception: Pokud došlo k chybě při zápisu.
+    """
+    with open(path, mode='w', encoding=encoding) as file:
+        file.write(data)
 
 
 def jsonfile_read(path, encoding='utf-8'):
-    try:
-        with open(path, encoding=encoding) as json_file:
-            data = json.load(json_file)
-    except FileNotFoundError:
-        print(f'Soubor nebyl nalezen')
-        return False
-    except Exception as error:
-        print(f'Chyba načtení souboru: {error} {type(error)}')
-        return False
-    finally:
-        json_file.close()
-    return data
+    """Načte data z JSON souboru.
+
+    Args:
+        path (str): Cesta k JSON souboru.
+        encoding (str): Kódování souboru (výchozí: utf-8).
+
+    Returns:
+        dict|list: Data z JSON souboru.
+
+    Raises:
+        FileNotFoundError: Pokud soubor neexistuje.
+        json.JSONDecodeError: Pokud soubor není validní JSON.
+        Exception: Pokud došlo k chybě při čtení.
+    """
+    with open(path, encoding=encoding) as json_file:
+        return json.load(json_file)
 
 
-def jsonfile_write(path, data={}, encoding='utf-8'):
-    try:
-        with open(path, mode='w', encoding=encoding) as json_file:
-            json.dump(data, json_file)
-    except FileNotFoundError:
-        print(f'Soubor nebyl nalezen')
-        return False
-    except Exception as error:
-        print(f'Chyba zápisu do souboru: {error} {type(error)}')
-        return False
-    finally:
-        json_file.close()
-    return True
+def jsonfile_write(path, data=None, encoding='utf-8'):
+    """Uloží data do JSON souboru.
+
+    Args:
+        path (str): Cesta k JSON souboru.
+        data (dict|list): Data k uložení (výchozí: prázdný slovník).
+        encoding (str): Kódování souboru (výchozí: utf-8).
+
+    Raises:
+        FileNotFoundError: Pokud není cesta platná.
+        TypeError: Pokud data nejsou JSON serializovatelná.
+        Exception: Pokud došlo k chybě při zápisu.
+    """
+    if data is None:
+        data = {}
+    with open(path, mode='w', encoding=encoding) as json_file:
+        json.dump(data, json_file)
 
 
 def csvfile_read(path, encoding='utf-8'):
-    try:
-        with open(path, encoding=encoding, newline='\n') as csv_file:
-            reader = csv.DictReader(csv_file, delimiter=';', quotechar='"')
-            dict_list = []
-            for line in reader:
-                dict_list.append(line)
-    except FileNotFoundError:
-        print(f'Soubor nebyl nalezen')
-        return False
-    except Exception as error:
-            print(f'Chyba načtení souboru: {error} {type(error)}')
-            return False
-    finally:
-        csv_file.close()
-    return dict_list
+    """Načte data z CSV souboru.
+
+    Args:
+        path (str): Cesta k CSV souboru.
+        encoding (str): Kódování souboru (výchozí: utf-8).
+
+    Returns:
+        list: Seznam slovníků reprezentujících řádky CSV.
+
+    Raises:
+        FileNotFoundError: Pokud soubor neexistuje.
+        Exception: Pokud došlo k chybě při čtení.
+    """
+    with open(path, encoding=encoding, newline='\n') as csv_file:
+        reader = csv.DictReader(csv_file, delimiter=';', quotechar='"')
+        return [line for line in reader]
 
 
-def csvfile_write(path, data = [], encoding='utf-8'):
-    try:
-        with open(path, mode='w', encoding=encoding, newline='\n') as file:
-            writer = csv.DictWriter(file, fieldnames=list(data[0].keys()))
-            writer.writeheader()
-            for row in data:
-                writer.writerow(row)
+def csvfile_write(path, data=None, encoding='utf-8'):
+    """Uloží data do CSV souboru.
 
+    Args:
+        path (str): Cesta k CSV souboru.
+        data (list): Seznam slovníků reprezentujících řádky CSV (výchozí: prázdný seznam).
+        encoding (str): Kódování souboru (výchozí: utf-8).
 
-    except FileExistsError as error:
-        print(f'Soubor nebyl nalezen: {error}')
-        return False
-    except Exception as error:
-        print(f'Problém při otevírání souboru 2: {error} {type(error)}')
-        return False
-    finally:
-        file.close()
-    return True
+    Raises:
+        FileNotFoundError: Pokud není cesta platná.
+        IndexError: Pokud je seznam dat prázdný.
+        ValueError: Pokud data nejsou validní seznamem slovníků.
+        Exception: Pokud došlo k chybě při zápisu.
+    """
+    if data is None:
+        data = []
+    
+    if not data:
+        raise ValueError("Data nesmí být prázdné.")
+    
+    if not isinstance(data, list):
+        raise ValueError("Data musí být seznam slovníků.")
+    
+    if not isinstance(data[0], dict):
+        raise ValueError("Každý prvek dat musí být slovník.")
+    
+    with open(path, mode='w', encoding=encoding, newline='\n') as file:
+        writer = csv.DictWriter(file, fieldnames=list(data[0].keys()))
+        writer.writeheader()
+        for row in data:
+            writer.writerow(row)
 
