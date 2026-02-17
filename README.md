@@ -678,5 +678,76 @@ Pro otázky nebo problémy navštivte soubory kódu a jejich docstrings.
 
 ---
 
-**Poslední aktualizace:** 9. února 2026
+## 🎯 Alternativní řešení - Abstraktní turnaje
+
+Projekt obsahuje **tři různé implementace** modulů pro turnaje:
+
+### 1. tournament.py - Originální
+- Jedna třída `Tournament` s enum `TournamentType`
+- Podmínky `if-elif` v metodě `play()`
+- Vhodné pro: Jednoduchost, pochopení problému
+
+### 2. tournament2.py - Vylepšená verze
+- Přidáno: místo konání (lokace)
+- Přidáno: Koly (přirozené rozdělení)
+- Detailnější záznamy zápasů
+- Vhodné: Produkční kód s podmínkami
+
+### 3. **tournament_abc.py** ⭐ - Abstraktní dědičnost (NOVÉ)
+- `BaseTournament` - abstraktní třída
+- `RoundRobinTournament` - konkrétní implementace
+- `EliminationTournament` - konkrétní implementace
+- **Bez podmínek** - polymorfismus
+- **Snadné rozšíření** - přidat nový typ je snadné
+- Vhodné: OOP design, tým, budoucí rozšíření
+
+#### Spuštění abstraktní verze
+
+```bash
+# Demo program
+python tournament_abc_demo.py
+
+# Automatické testy
+python tournament_abc_test.py
+
+# Programaticky
+python -c "
+from game import load_players
+from tournament_abc import RoundRobinTournament
+
+players = load_players('players.json')
+t = RoundRobinTournament(players, 'Praha')
+t.play()
+t.print_standings()
+"
+```
+
+#### Příklad polymorfismu
+```python
+from tournament_abc import BaseTournament, RoundRobinTournament, EliminationTournament
+
+# Obě třídy jsou kompatibilní přes BaseTournament
+tournaments: List[BaseTournament] = [
+    RoundRobinTournament(players1, "Praha"),
+    EliminationTournament(players2, "Brno")
+]
+
+# Polymorfismus - volá se správná implementace
+for tournament in tournaments:
+    tournament.play()
+    tournament.print_standings()
+```
+
+**Soubory abstraktní verze:**
+- `tournament_abc.py` - Modul (BaseTournament, RoundRobinTournament, EliminationTournament)
+- `tournament_abc_demo.py` - Interaktivní demo
+- `tournament_abc_test.py` - Automatické testy
+- `tournament_abc.md` - Detailní dokumentace
+- `ARCHITECTURE.md` - Srovnění všech tří přístupů
+- `IMPLEMENTATION_NOTES.md` - Technické poznámky
+- `TOURNAMENT_ABC_SUMMARY.md` - Shrnutí
+
+---
+
+**Poslední aktualizace:** 17. února 2026
 
