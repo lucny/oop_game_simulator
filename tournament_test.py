@@ -1,10 +1,10 @@
-"""Test skript pro abstraktní turnaje - programatické spuštění.
+"""Test skript pro turnaje - programatické spuštění.
 
 Demonstruje práci s TournamentFactory a polymorfismem.
 """
 
 from game import load_players
-from tournament_abc import TournamentFactory, RoundRobinTournament, EliminationTournament
+from tournament import TournamentFactory, RoundRobinTournament, EliminationTournament
 
 
 def test_round_robin():

@@ -1,0 +1,363 @@
+@startuml OOP_Game_Simulator_Class_Diagram
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+
+title Class Diagram - OOP Game Simulator\n(Tournament System with Abstract Inheritance)
+
+package game {
+  enum Gender {
+    male = "man"
+    female = "woman"
+  }
+
+  class Dice <<static>> {
+    {static} +roll(max_value: int = 6): int
+  }
+
+  class Person {
+    #nickname: str
+    #_gender: Gender
+    #_birth: datetime
+    +__init__(nickname, gender)
+    +gender: Gender <<property>>
+    +get_seconds_from_birth(): int
+    +__str__(): str
+  }
+
+  class Player {
+    #state: str
+    #count_of_games: int
+    #_wins: int
+    #score: dict
+    +__init__(nickname, gender, state)
+    +wins: int <<property>>
+    +win_rate(): float
+    +overall_score(): tuple
+    +__str__(): str
+  }
+
+  class Match {
+    #_hplayer: Player
+    #_gplayer: Player
+    #winning_score: int
+    #max_dice_value: int
+    #_datetime: datetime
+    #hp_points: int
+    #gp_points: int
+    #_history: list
+    +__init__(h_player, g_player, winning_score, max_dice_value)
+    +h_player: Player <<property>>
+    +g_player: Player <<property>>
+    +play(): void
+    +score(): tuple
+    +get_history(): list
+    +save_match_results(filename: str): void
+    -__roll(): int
+    +__str__(): str
+  }
+
+  Person <|-- Player
+  Match "1" *-- "2" Player : contains
+  Match ..> Dice : uses
+  Player --> Gender : has
+}
+
+package tournament {
+  
+  abstract class BaseTournament <<ABC>> {
+    #players: list[Player]
+    #location: str
+    #winning_score: int
+    #max_dice_value: int
+    #_datetime: datetime
+    #matches: list[Match]
+    #winner: Player
+    #_detailed_results: list[dict]
+    +__init__(players, location, winning_score, max_dice_value)
+    {abstract} +play(): void
+    +get_standings(): list[tuple]
+    +print_standings(): void
+    +save_tournament_results(filename: str): void
+    #_print_tournament_header(): void
+    +__str__(): str
+  }
+
+  class RoundRobinTournament {
+    +__init__(players, location, winning_score, max_dice_value)
+    +play(): void
+    -_generate_round_robin_schedule(): list
+    -_determine_round_robin_winner(): void
+  }
+
+  class EliminationTournament {
+    +__init__(players, location, winning_score, max_dice_value)
+    +play(): void
+    -_calculate_byes(num_players: int): int
+    -_get_elimination_round_name(num_players: int): str
+  }
+
+  class TournamentFactory <<Factory>> {
+    {static} +create(tournament_type: str, players, location, ...): BaseTournament
+    {static} +get_available_types(): list[str]
+  }
+
+  class TournamentPrinter <<Helper>> {
+    {static} +print_round_header(round_name: str): void
+    {static} +print_match_info(player1: str, player2: str): void
+    {static} +print_match_result(...): void
+    {static} +print_elimination_result(winner: str, loser: str): void
+    {static} +print_bye_info(player: str): void
+    {static} +print_round_standings(...): void
+    {static} +print_winner(winner_name: str): void
+  }
+
+  BaseTournament <|-- RoundRobinTournament : extends
+  BaseTournament <|-- EliminationTournament : extends
+  TournamentFactory ..> BaseTournament : creates
+  TournamentFactory ..> RoundRobinTournament : creates
+  TournamentFactory ..> EliminationTournament : creates
+  BaseTournament "1" *-- "*" Match : contains
+  BaseTournament "1" o-- "*" Player : has
+  BaseTournament ..> TournamentPrinter : uses
+}
+
+package files {
+  class FileOperations <<utility>> {
+    {static} +textfile_read(path: str, encoding: str): str
+    {static} +textfile_write(path: str, data: str, encoding: str): void
+    {static} +jsonfile_read(path: str, encoding: str): dict|list
+    {static} +jsonfile_write(path: str, data: dict|list, encoding: str): void
+    {static} +csvfile_read(path: str, encoding: str): list[dict]
+    {static} +csvfile_write(path: str, data: list[dict], encoding: str): void
+  }
+}
+
+' Main module relationship
+class Main {
+  {static} +main(): void
+  {static} +display_menu(): void
+  {static} +get_tournament_location(): str
+  {static} +run_tournament(tournament_type: str): void
+}
+
+Main ..> TournamentFactory : uses
+Main ..> FileOperations : uses
+BaseTournament ..> FileOperations : uses
+Match ..> FileOperations : uses
+
+' Load players function
+note right of Main
+  **Main program flow:**
+  1. Display menu
+  2. User selects tournament type
+  3. Load players from JSON
+  4. Create tournament via Factory
+  5. Play tournament
+  6. Save results
+end note
+
+note right of BaseTournament
+  **Abstract Base Class**
+  Defines interface for all tournaments.
+  Concrete classes must implement play().
+  
+  **Polymorphism:** All tournament types
+  can be used through BaseTournament interface.
+end note
+
+note right of EliminationTournament
+  **Bye players algorithm:**
+  - Calculate next power of 2
+  - Bye players = n - 2*(n - next_pow/2)
+  - Example: 13 players → 3 bye
+  
+  **Interleaving:** Seeded players
+  alternate with unseeded in bracket.
+end note
+
+@enduml
+
+@enduml
+
+' ============================================================================
+' Flowchart: Elimination Tournament Algorithm
+' ============================================================================
+
+@startuml Elimination_Algorithm_Flowchart
+title Elimination Tournament Algorithm (Pavouk)\nwith Bye Players and Interleaving
+
+start
+:Load players list;
+:round_num = 1;
+:first_round = true;
+
+:Calculate bye players\n(nasazení);
+note right
+  **Bye calculation:**
+  next_power = 2^⌈log₂(n)⌉
+  num_matches = n - next_power/2
+  num_byes = n - 2*num_matches
+end note
+
+if (num_byes > 0?) then (yes)
+  :Print "VOLNÉ LOSY" header;
+  :bye_players = first num_byes players;
+  :playing_players = remaining players;
+  :Set remaining_players = playing_players;
+else (no)
+  :bye_players = [];
+endif
+
+while (remaining_players count > 1\nOR first_round with byes?) is (yes)
+  :Determine round name\n(based on total players);
+  :next_round_players = [];
+  
+  partition "Play matches" {
+    while (more pairs?) is (yes)
+      if (odd player left?) then (yes)
+        :Current player gets bye;
+        :Add to next_round_players;
+      else (no)
+        :player1 = current;
+        :player2 = next;
+        :Play match;
+        :Determine winner;
+        :Add winner to next_round_players;
+        :Record match details;
+      endif
+    endwhile (no)
+  }
+  
+  if (first_round AND bye_players exist?) then (yes)
+    :Interleave bye_players\nwith next_round_players;
+    note right
+      **Interleaving pattern:**
+      [winner1, bye1, winner2, bye2, ...]
+      Ensures seeded vs unseeded matchups
+    end note
+    :first_round = false;
+  endif
+  
+  :remaining_players = next_round_players;
+  :round_num++;
+endwhile (no)
+
+:winner = remaining_players[0];
+:Print winner;
+
+stop
+@enduml
+
+' ============================================================================
+' Flowchart: Round-Robin Scheduling Algorithm
+' ============================================================================
+
+@startuml RoundRobin_Scheduling_Flowchart
+title Round-Robin Scheduling Algorithm\n(Rotation Method)
+
+start
+:Load players list;
+:n = number of players;
+
+if (n is odd?) then (yes)
+  :Add BYE (None) to players;
+  :n = n + 1;
+endif
+
+:rounds = [];
+:round_num = 0;
+
+repeat
+  :round_matches = [];
+  :i = 0;
+  
+  while (i < n/2?) is (yes)
+    :player1 = players[i];
+    :player2 = players[n - 1 - i];
+    
+    if (player1 or player2 is BYE?) then (yes)
+      :Skip this pair;
+    else (no)
+      :Add (player1, player2) to round_matches;
+    endif
+    :i++;
+  endwhile (no)
+  
+  :Add round_matches to rounds;
+  :round_num++;
+  
+  :Rotate players (keep first, rotate rest);
+  note right
+    **Rotation pattern:**
+    [1, 2, 3, 4, 5, 6]
+    → [1, 6, 2, 3, 4, 5]
+    → [1, 5, 6, 2, 3, 4]
+    etc.
+  end note
+  
+repeat while (round_num < n - 1?) is (yes)
+->no;
+
+:Return rounds schedule;
+
+stop
+@enduml
+
+' ============================================================================
+' Sequence Diagram: Tournament Creation via Factory
+' ============================================================================
+
+@startuml Tournament_Factory_Sequence
+title Tournament Creation via Factory Pattern
+
+actor User
+participant Main
+participant TournamentFactory
+participant RoundRobinTournament
+participant EliminationTournament
+participant Player
+
+User -> Main: Run program
+Main -> Main: display_menu()
+Main -> User: Show menu options
+
+User -> Main: Select tournament type
+Main -> Main: get_tournament_location()
+User -> Main: Enter location
+
+Main -> Main: load_players("players.json")
+Main -> TournamentFactory: create(type, players, location, ...)
+
+alt tournament_type == "round_robin"
+  TournamentFactory -> RoundRobinTournament: new(players, location, ...)
+  RoundRobinTournament --> TournamentFactory: tournament instance
+else tournament_type == "elimination"
+  TournamentFactory -> EliminationTournament: new(players, location, ...)
+  EliminationTournament --> TournamentFactory: tournament instance
+else unknown type
+  TournamentFactory --> Main: ValueError
+end
+
+TournamentFactory --> Main: tournament (BaseTournament)
+Main -> Main: tournament.play()
+Main -> Main: tournament.print_standings()
+Main -> Main: tournament.save_tournament_results()
+Main -> User: Display results
+
+@enduml
+    :player1 = players[i];
+    :player2 = players[n-1-i];
+    if (player1 != None && player2 != None?) then (ano)
+      :Přidej (player1, player2) do round_matches;
+    endif
+    :i = i + 1;
+  endwhile (ne)
+  :Přidej round_matches do rounds;
+  :Rotuj hráče (fixní první, ostatní rotují);
+repeat while (vytvořeno n-1 kol?) is (ne)
+
+:Výstup rounds;
+stop
+
+@enduml

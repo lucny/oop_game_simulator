@@ -1,32 +1,61 @@
-# OOP Game Simulator - Simulátor her a turnajů
+# OOP Game Simulator - Simulátor turnajů
 
 ## 📋 Obsah
 
 1. [Přehled projektu](#přehled-projektu)
-2. [Architektura a struktura tříd](#architektura-a-struktura-tříd)
-3. [Instalace a spuštění](#instalace-a-spuštění)
-4. [Moduly a jejich popis](#moduly-a-jejich-popis)
-5. [Datové struktury](#datové-struktury)
-6. [Algoritmy](#algoritmy)
-7. [Příklady použití](#příklady-použití)
-8. [Datové soubory](#datové-soubory)
-9. [Pokročilé funkce](#pokročilé-funkce)
-10. [Optimalizace a standardy](#optimalizace-a-standardy)
+2. [Struktura projektu](#struktura-projektu)
+3. [Architektura a struktura tříd](#architektura-a-struktura-tříd)
+4. [Instalace a spuštění](#instalace-a-spuštění)
+5. [Moduly a jejich popis](#moduly-a-jejich-popis)
+6. [Datové struktury](#datové-struktury)
+7. [Algoritmy](#algoritmy)
+8. [Příklady použití](#příklady-použití)
+9. [Optimalizace a standardy](#optimalizace-a-standardy)
 
 ---
 
 ## 🎯 Přehled projektu
 
-**OOP Game Simulator** je Python aplikace pro simulaci her a turnajů mezi více hráči. Projekt demonstruje objektově orientované programování s využitím dědičnosti, polimorfismu a různých enumerací.
+**OOP Game Simulator** je Python aplikace pro simulaci turnajů mezi více hráči. Projekt demonstruje objektově orientované programování s využitím abstraktní dědičnosti, polimorfismu a Factory pattern.
 
 ### Hlavní funkce:
-- ✅ Simulace jednotlivých zápasů mezi dvěma hráči
 - ✅ Turnaje formou **Round-robin** (každý s každým)
 - ✅ Turnaje formou **Eliminace** (vyřazovací systém/pavouk)
+- ✅ **Abstraktní dědičnost** - `BaseTournament` jako základ
+- ✅ **Factory pattern** - `TournamentFactory` pro vytváření turnajů
+- ✅ **Polymorfismus** - jednotné rozhraní pro všechny typy turnajů
+- ✅ Správné zpracování bye hráčů v eliminačních turnajích
+- ✅ Prokládání nasazených a nenasazených hráčů
 - ✅ Detailní záznamy zápasů a turnajů do JSON
-- ✅ Načítání a ukládání dat ze/do souborů (JSON, CSV, textové)
 - ✅ Komprehenzivní ošetření výjimek
 - ✅ Dodržování PEP 8 standardů
+
+---
+
+## 📁 Struktura projektu
+
+```
+oop_game_simulator/
+├── main.py              # Hlavní demonstrační program
+├── game.py              # Základní herní třídy (Player, Match, Dice)
+├── files.py             # Pomocné funkce pro práci se soubory
+├── tournament.py        # Abstraktní turnajové třídy
+├── tournament_test.py   # Automatizované testy turnajů
+├── players.json         # Vstupní data hráčů
+├── README.md            # Tento soubor
+├── .venv/               # Virtuální prostředí Python
+├── __pycache__/         # Cache Python modulů
+├── diagrams/            # PlantUML diagramy architektury
+└── images/              # Obrázky pro dokumentaci
+```
+
+**Klíčové soubory:**
+- **main.py** - Vstupní bod aplikace, interaktivní menu pro výběr typu turnaje
+- **game.py** - Herní engine (Player, Match, Dice, load_players)
+- **files.py** - I/O operace (JSON, CSV, text)
+- **tournament.py** - Turnajový systém s abstraktní dědičností
+- **tournament_test.py** - Automatické testy všech funkcí
+- **players.json** - Data 13 hráčů z různých zemí
 
 ---
 
@@ -43,12 +72,37 @@ Dice (statická třída pro hod kostkou)
 Match (zápas mezi dvěma hráči)
   └── interactions with: Player, Dice
 
-Tournament (turnaj s hráči a zápasy)
-  └── contains: List[Player], List[Match]
-  └── uses: TournamentType (Enum)
+BaseTournament (abstraktní třída pro turnaje) - ABC
+  ├── RoundRobinTournament (každý s každým)
+  └── EliminationTournament (vyřazovací systém)
+
+TournamentFactory (tovární třída pro vytváření turnajů)
+TournamentPrinter (pomocná třída pro výstup)
 
 Gender (Enum: male, female)
-TournamentType (Enum: ROUND_ROBIN, ELIMINATION)
+```
+
+### Abstraktní dědičnost
+
+**BaseTournament** je abstraktní třída definující rozhraní pro všechny turnaje:
+- `play()` - abstraktní metoda (musí být implementována)
+- `_print_tournament_header()` - společná metoda
+- `print_standings()` - společná metoda
+- `save_tournament_results()` - společná metoda
+
+**RoundRobinTournament** a **EliminationTournament** implementují vlastní logiku `play()`.
+
+### Factory Pattern
+
+**TournamentFactory** poskytuje jednotný způsob vytváření turnajů:
+```python
+tournament = TournamentFactory.create(
+    tournament_type="round_robin",  # nebo "elimination"
+    players=players,
+    location="Praha",
+    winning_score=10,
+    max_dice_value=6
+)
 ```
 
 ### Detailní popis tříd
@@ -119,30 +173,75 @@ Reprezentuje zápas mezi dvěma hráči.
 **Privátní metody:**
 - `__roll() -> int` - simuluje hod kostkou pro oba hráče
 
-#### **Tournament (Turnaj)**
-Organizuje turnaj mezi více hráči.
+#### **BaseTournament (Abstraktní třída)**
+Abstraktní základní třída pro všechny typy turnajů.
 
 **Atributy:**
 - `players: List[Player]` - seznam hráčů
 - `location: str` - místo konání turnaje
-- `tournament_type: TournamentType` - typ turnaje
 - `winning_score: int` - body na zápas
 - `max_dice_value: int` - maximální hodnota kostky
 - `matches: List[Match]` - seznam odehraných zápasů
 - `winner: Optional[Player]` - vítěz turnaje
 - `_detailed_results: List[Dict]` - detailní záznamy
 
+**Abstraktní metody:**
+- `play() -> None` - musí implementovat každá podtřída
+
 **Klíčové metody:**
-- `play() -> None` - odehraje turnaj dle typu
 - `get_standings() -> List[Tuple]` - vrací pořadí hráčů
 - `print_standings() -> None` - vyprintuje tabulku
 - `save_tournament_results(filename) -> None` - uloží detailní výsledky
+- `_print_tournament_header() -> None` - vypíše hlavičku turnaje
 
-**Privátní metody:**
-- `_play_round_robin() -> None` - turnaj "každý s každým"
-- `_play_elimination() -> None` - turnaj "pavouk"
+#### **RoundRobinTournament**
+Implementace turnaje "každý s každým".
+
+**Specifické metody:**
+- `play() -> None` - odehraje všechny zápasy v kolech
 - `_generate_round_robin_schedule() -> List` - generuje rozpis kol
 - `_determine_round_robin_winner() -> None` - určí vítěze
+
+**Algoritmus:**
+- N hráčů → N-1 kol
+- Rotační algoritmus pro párování
+- Lichý počet → jeden hráč má volný los (bye) v každém kole
+
+#### **EliminationTournament**
+Implementace vyřazovacího turnaje (pavouk).
+
+**Specifické metody:**
+- `play() -> None` - odehraje eliminační turnaj
+- `_calculate_byes() -> int` - vypočítá počet bye hráčů
+- `_get_elimination_round_name() -> str` - vrací název kola
+
+**Algoritmus:**
+- Vypočítá bye hráče (nasazené) na začátku
+- Bye hráči automaticky postupují do dalšího kola
+- Prokládání: nasazení hrají proti nenasazeným
+- Pokračuje dokud nezbyde 1 vítěz
+
+#### **TournamentFactory**
+Tovární třída pro vytváření turnajů.
+
+**Metody:**
+- `create(tournament_type, players, location, ...) -> BaseTournament`
+- `get_available_types() -> List[str]`
+
+**Podporované typy:**
+- `"round_robin"` - každý s každým
+- `"elimination"` - vyřazovací systém
+
+#### **TournamentPrinter**
+Pomocná třída pro formátování výstupu.
+
+**Statické metody:**
+- `print_round_header(round_name)` - hlavička kola
+- `print_match_info(p1, p2)` - info o zápase
+- `print_match_result(...)` - výsledek zápasu
+- `print_elimination_result(winner, loser)` - postup/vyřazení
+- `print_bye_info(player)` - volný los
+- `print_winner(winner_name)` - vítěz turnaje
 
 ---
 
@@ -150,7 +249,7 @@ Organizuje turnaj mezi více hráči.
 
 ### Požadavky
 - Python 3.7+
-- Standardní knihovny (json, csv, datetime, enum, random)
+- Standardní knihovny (json, csv, datetime, enum, random, abc, math)
 
 ### Instalace
 ```bash
@@ -162,30 +261,24 @@ cd d:\ukoly\python\oop_game_simulator
 
 ### Spuštění
 
-#### Jednoduchý zápas
+#### Interaktivní demo (hlavní program)
 ```bash
 python main.py
 ```
-Načte hráče z `players.json`, odehraje zápas mezi prvními dvěma a uloží výsledky.
+Program zobrazí menu:
+1. Každý s každým (Round-robin)
+2. Eliminační systém (Pavouk)
+3. Ukončit program
 
-#### Turnaj Round-robin
+#### Automatické testy
 ```bash
-python tournament_demo.py
-# Vybrat volbu: 1
+python tournament_test.py
 ```
-
-#### Turnaj Eliminace
-```bash
-python tournament_demo.py
-# Vybrat volbu: 2
-```
-
-#### Pokročilý turnaj s lokalitou
-```bash
-python tournament2_demo.py
-# Zadej místo: Praha
-# Vybrat typ turnaje
-```
+Spustí 4 testy:
+- Round-robin turnaj (13 hráčů)
+- Eliminační turnaj (13 hráčů)
+- Test polymorfismu
+- Test TournamentFactory
 
 ---
 
@@ -244,12 +337,38 @@ Jádro logiky her a hráčů.
 5. Aktualizace statistik hráčů
 
 ### **tournament.py** 
-Rozšířené moduly pro turnaje.
+Abstraktní turnajový systém s polymorfismem.
 
-**tournament.py:**
-- Základní implementace turnajů
-- Round-robin: generování a odehrávání zápasů
-- Eliminace: vyřazovací systém
+**Klíčové komponenty:**
+
+1. **BaseTournament (ABC)** - abstraktní základní třída
+   - Definuje společné rozhraní pro všechny turnaje
+   - Abstraktní metoda `play()` - každá podtřída musí implementovat
+   - Společné metody: `print_standings()`, `save_tournament_results()`
+
+2. **RoundRobinTournament** - každý s každým
+   - Rotační algoritmus pro generování kol
+   - N hráčů → N-1 kol
+   - Lichý počet: jeden hráč má volný los v každém kole
+   - Vítěz: nejvíce výher, při rovnosti rozhoduje skóre
+
+3. **EliminationTournament** - vyřazovací systém
+   - Vypočítá bye hráče (nasazené) pomocí `_calculate_byes()`
+   - Bye hráči postupují přímo do dalšího kola
+   - Prokládání: nasazení hrají proti nenasazeným
+   - Správná struktura pavouka pro libovolný počet hráčů
+   - Příklad: 13 hráčů → 3 bye + 10 hraje → 8 čtvrtfinále → 4 semifinále → 2 finále
+
+4. **TournamentFactory** - tovární třída
+   - Vytváří instance turnajů podle typu
+   - `create(tournament_type, ...)` - hlavní metoda
+   - `get_available_types()` - seznam podporovaných typů
+   - Vyvolá `ValueError` pro neznámý typ
+
+5. **TournamentPrinter** - formátování výstupu
+   - Statické metody pro tisk
+   - Hlavičky kol, výsledků zápasů, tabulky
+   - ASCII art separátory
 
 #### Algoritmus Round-robin:
 Generuje rozpis kol tak, aby každý hráč hrál v každém kole max. jednou:
@@ -259,22 +378,39 @@ Generuje rozpis kol tak, aby každý hráč hrál v každém kole max. jednou:
 
 #### Algoritmus Eliminace:
 Vyřazovací systém s podporou lichého počtu hráčů:
-- Páry hrají zápasy, vítěz postupuje
-- Při lichém počtu: první hráč automaticky postupuje
+- Vypočítá počet bye hráčů: `next_power_of_2 - num_players`
+- Bye hráči automaticky postupují
+- První kolo: nenasazení hrají mezi sebou
+- Další kola: prokládání nasazených a nenasazených
 - Pokračuje dokud zbývá 1 hráč (vítěz)
 
+**Výpočet bye hráčů:**
+```python
+# Příklad: 13 hráčů
+next_power = 16  # nejbližší mocnina 2
+num_matches_first = 13 - 16//2 = 5  # zápasů v prvním kole
+num_byes = 13 - (5 * 2) = 3  # bye hráčů
+```
+
 ### **main.py**
-Jednoduchý vstupní bod pro spuštění zápasu.
+Hlavní demonstrační program s interaktivním menu.
 
-Plní funkci:
-1. Načte hráče z `players.json`
-2. Ověří, že jsou alespoň 2 hráči
-3. Vytvoří a odehraje `Match` mezi prvními dvěma
-4. Vyprintuje výsledek a historii
-5. Uloží výsledky do `results.json`
+Plní funkce:
+1. Zobrazí menu pro výběr typu turnaje
+2. Načte hráče z `players.json`
+3. Získá místo konání od uživatele
+4. Vytvoří turnaj pomocí `TournamentFactory`
+5. Odehraje turnaj a vypíše výsledky
+6. Uloží výsledky do JSON souboru
 
-### **tournament_demo.py**
-Interaktivní skripty pro turnaje s výběrem typu.
+### **tournament_test.py**
+Automatizované testy pro ověření funkčnosti.
+
+**4 testy:**
+1. **Round-robin test** - 13 hráčů, 13 kol, 78 zápasů
+2. **Eliminační test** - 13 hráčů, 3 bye, 12 zápasů
+3. **Polymorfismus test** - vytvoření obou typů turnajů
+4. **Factory test** - vytváření přes TournamentFactory, test neplatného typu
 
 ---
 
@@ -296,47 +432,37 @@ Interaktivní skripty pro turnaje s výběrem typu.
 ]
 ```
 
-### **results.json** (Výstup - zápas)
-```json
-[
-  {
-    "date": "2026-02-09 15:30:45",
-    "house_player": "Jan",
-    "guest_player": "Marie",
-    "score": [10, 7]
-  }
-]
-```
-
 ### **tournament_results.json** (Výstup - turnaj)
 ```json
 {
   "tournament_info": {
-    "date": "2026-02-09 15:45:00",
+    "date": "2026-02-23 22:30:00",
     "location": "Praha",
     "type": "round_robin",
     "winning_score": 10,
-    "max_dice_value": 6
+    "max_dice_value": 6,
+    "num_players": 13
   },
   "players": [
-    {"nickname": "Jan", "state": "CZ", "gender": "man"},
-    {"nickname": "Marie", "state": "SK", "gender": "woman"}
+    {"nickname": "Houska", "state": "CZE", "gender": "man"},
+    {"nickname": "Jenny", "state": "CAN", "gender": "woman"}
   ],
   "winner": {
-    "nickname": "Jan",
-    "state": "CZ",
-    "total_wins": 3,
-    "total_games": 3,
-    "win_rate": 100.0
+    "nickname": "Houska",
+    "state": "CZE",
+    "total_wins": 9,
+    "total_games": 12,
+    "win_rate": 75.0
   },
   "matches": [
     {
       "round": 1,
+      "round_name": "KOLO 1",
       "match_type": "round_robin",
-      "player1": {"nickname": "Jan", "state": "CZ"},
-      "player2": {"nickname": "Marie", "state": "SK"},
+      "player1": {"nickname": "Houska", "state": "CZE"},
+      "player2": {"nickname": "Jenny", "state": "CAN"},
       "final_score": {"player1": 10, "player2": 7},
-      "winner": "Jan",
+      "winner": "Houska",
       "score_history": [[1,0], [2,0], [2,1]],
       "match_duration": 15
     }
@@ -344,21 +470,44 @@ Interaktivní skripty pro turnaje s výběrem typu.
   "final_standings": [
     {
       "position": 1,
-      "player": "Jan",
-      "state": "CZ",
-      "wins": 3,
-      "games": 3,
-      "score_plus": 30,
-      "score_minus": 18,
+      "player": "Houska",
+      "state": "CZE",
+      "wins": 9,
+      "games": 12,
+      "score_plus": 32,
+      "score_minus": 20,
       "score_difference": 12,
-      "win_rate": 100.0
+      "win_rate": 75.0
     }
   ],
   "statistics": {
-    "total_matches": 3,
-    "total_rounds": 3,
+    "total_matches": 78,
+    "total_rounds": 13,
     "average_match_duration": 15.33
   }
+}
+```
+
+**Eliminační turnaj:**
+```json
+{
+  "tournament_info": {
+    "type": "elimination",
+    "num_players": 13,
+    "num_bye_players": 3
+  },
+  "matches": [
+    {
+      "round": 1,
+      "round_name": "KOLO 13 HRÁČŮ",
+      "match_type": "elimination",
+      "player1": {"nickname": "Michelle"},
+      "player2": {"nickname": "Justine"},
+      "final_score": {"player1": 2, "player2": 3},
+      "winner": "Justine",
+      "eliminated": "Michelle"
+    }
+  ]
 }
 ```
 
@@ -383,175 +532,172 @@ Interaktivní skripty pro turnaje s výběrem typu.
 **Výhody:**
 - Každý hráč hraje proti každému přesně jednou
 - V každém kole hraje maximálně jednou
-- Přírodní organizace turnaje
+- Spravedlivé určení vítěze (nejvíce výher)
 
 ### Elimination Algoritmus (Vyřazovací systém)
 
 ```
 1. Vstup: seznam hráčů (remaining_players)
-2. Dokud je více než 1 hráč:
-   a. Pokud je počet hráčů lichý:
-      - První hráč automaticky postupuje
-   b. Zbylé hráče spáruj
-   c. Pro každou páru:
+2. Vypočítej bye hráče (nasazené):
+   a. Najdi nejbližší vyšší mocninu 2
+   b. num_byes = num_players - 2 * (num_players - next_power//2)
+3. Bye hráči automaticky postupují do dalšího kola
+4. První kolo: nenasazení hrají mezi sebou
+5. Další kola: prokládat nasazené s nenasazenými
+6. Dokud je více než 1 hráč:
+   a. Spáruj sousední hráče (i, i+1)
+   b. Pro každou páru:
       - Odehraj zápas
       - Vítěz postupuje do dalšího kola
       - Poražený je vyřazen
-   d. Aktualizuj seznam hráčů na vítěze
-3. Výstup: poslední zbylý hráč = vítěz
+   c. Aktualizuj seznam hráčů na vítěze
+7. Výstup: poslední zbylý hráč = vítěz
+```
+
+**Výpočet bye hráčů pro 13 hráčů:**
+```
+next_power = 16 (nejbližší mocnina 2)
+matches_first_round = 13 - 16/2 = 5
+num_byes = 13 - (5 * 2) = 3
+
+Výsledek:
+- 3 hráči mají volný los (bye)
+- 10 hráčů hraje první kolo (5 zápasů)
+- 8 hráčů postupuje do čtvrtfinále (5 vítězů + 3 bye)
+- 4 do semifinále, 2 do finále
+- Celkem: 12 zápasů (5+4+2+1)
+```
+
+**Prokládání hráčů:**
+```python
+# Bye hráči: [A, B, C]
+# Vítězové prvního kola: [D, E, F, G, H]
+# 
+# Prokládání:
+# [D, A, E, B, F, C, G, H]
+#
+# Páry ve čtvrtfinále:
+# (D, A), (E, B), (F, C), (G, H)
+# Nasazení A,B,C hrají proti nenasazeným D,E,F
 ```
 
 **Charakteristika:**
-- Počet kol: log₂(n) (zaokrouhleno nahoru)
-- Méně zápasů: n-1 (vs. n*(n-1)/2 u round-robin)
-- Tradiční tenis, fotbal playoff systém
+- Počet kol: ⌈log₂(n)⌉
+- Počet zápasů: n - 1
+- Rychlejší než round-robin
+- Tradiční systém (tenis, fotbal playoff)
 
 ---
 
 ## 💡 Příklady použití
 
-### Příklad 1: Načtení a jednoduché otestování
-```python
-from game import load_players, Match
+### Příklad 1: Spuštění z příkazové řádky
+```bash
+# Interaktivní menu
+python main.py
 
-# Načti hráče
-players = load_players("players.json")
-
-# Vytvoř zápas
-match = Match(players[0], players[1], winning_score=10)
-
-# Odehraj
-match.play()
-
-# Výsledek
-print(f"Skóre: {match.score()}")
-print(f"Vítěz: {match.h_player if match.score()[0] > match.score()[1] else match.g_player}")
+# Automatické testy
+python tournament_test.py
 ```
 
 ### Příklad 2: Round-robin turnaj
 ```python
 from game import load_players
-from tournament2 import Tournament, TournamentType
+from tournament import RoundRobinTournament
 
+# Načti hráče
 players = load_players("players.json")
-tournament = Tournament(
+
+# Vytvoř turnaj
+tournament = RoundRobinTournament(
     players=players,
     location="Praha",
-    tournament_type=TournamentType.ROUND_ROBIN,
+    winning_score=10,
+    max_dice_value=6
+)
+
+# Odehraj a zobraz výsledky
+tournament.play()
+tournament.print_standings()
+
+# Ulož výsledky
+tournament.save_tournament_results("tournament_rr_praha.json")
+```
+
+### Příklad 3: Eliminační turnaj
+```python
+from tournament import EliminationTournament
+
+# Vytvoř eliminační turnaj
+tournament = EliminationTournament(
+    players=players,
+    location="Brno",
     winning_score=10,
     max_dice_value=6
 )
 
 tournament.play()
 tournament.print_standings()
-tournament.save_tournament_results("tournament_rr.json")
+tournament.save_tournament_results("tournament_elim_brno.json")
 ```
 
-### Příklad 3: Eliminační turnaj
+### Příklad 4: Použití TournamentFactory
 ```python
-from tournament2 import Tournament, TournamentType
+from tournament import TournamentFactory
 
-tournament = Tournament(
+# Dostupné typy
+types = TournamentFactory.get_available_types()
+print(types)  # ['round_robin', 'elimination']
+
+# Vytvoř turnaj pomocí Factory
+tournament = TournamentFactory.create(
+    tournament_type="round_robin",
     players=players,
-    location="Bratislava",
-    tournament_type=TournamentType.ELIMINATION,
-    winning_score=10
+    location="Praha",
+    winning_score=10,
+    max_dice_value=6
 )
 
+# Polymorfismus - stejné rozhraní pro oba typy
 tournament.play()
 tournament.print_standings()
-tournament.save_tournament_results("tournament_elim.json")
 ```
 
-### Příklad 4: Vlastní hráči
+### Příklad 5: Polymorfismus
 ```python
-from game import Player, Gender
+from tournament import BaseTournament, RoundRobinTournament, EliminationTournament
 
-player1 = Player("Alice", Gender.female, "CZ")
-player2 = Player("Bob", Gender.male, "SK")
+# Seznam různých typů turnajů
+tournaments: list[BaseTournament] = [
+    RoundRobinTournament(players, "Praha"),
+    EliminationTournament(players, "Brno")
+]
 
-# Manuálně lze přidat do turnaje
-players = [player1, player2]
-tournament = Tournament(players, "Brno")
+# Jednotné rozhraní
+for tournament in tournaments:
+    print(f"\n{tournament}")
+    tournament.play()
+    tournament.print_standings()
 ```
 
 ---
 
 ## 📊 Datové soubory
 
-### Konfigurace
-Projektu **nevyžaduje** konfigurační soubory (konf. jsou hardcodnuty v kódu).
-
 ### Vstupy
 - **players.json** - seznam hráčů (povinný pro `load_players()`)
 
 ### Výstupy (auto-generované)
-- **results.json** - výsledky jednotlivých zápasů
-- **tournament_results.json** - detailní výsledky turnaje
-- **tournament_*.json** - turnaje s konkrétní lokalitou a typem
-
----
-
-## 🔧 Pokročilé funkce
-
-### 1. Vlastní validace dat
-- Pohlaví: enum `Gender` (only 'man' nebo 'woman')
-- Počet výher: nesmí být záporný
-- Hráči v zápase: instance `Player`
-- CSV data: seznam neprázdných slovníků
-
-### 2. Ošetření výjimek
-Všechny moduly vyvolávají specifické výjimky:
-- `FileNotFoundError` - soubor neexistuje
-- `json.JSONDecodeError` - nevalidní JSON
-- `KeyError` - chybí klíč v datech
-- `ValueError` - nevalidní vstup
-- `TypeError` - špatný typ
-- `IOError` - chyba I/O operace
-
-Volající kód musí tyto výjimky zachytit:
-```python
-try:
-    players = load_players("players.json")
-except FileNotFoundError:
-    print("Soubor nenalezen!")
-except ValueError as e:
-    print(f"Chyba v datech: {e}")
-```
-
-### 3. Práce s historií skóre
-```python
-match = Match(player1, player2)
-match.play()
-
-# Historii lze získat
-history = match.get_history()
-# Výstup: [(1,0), (2,0), (2,1), (2,2), (3,2), ...]
-
-# V JSON je zaznamenána úplná historie
-```
-
-### 4. Statistiky turnaje
-```python
-tournament = Tournament(players, "Praha")
-tournament.play()
-
-standings = tournament.get_standings()
-# vrací: [(Player, wins, score_diff), ...]
-
-# JSON obsahuje:
-# - Průměrné trvání zápasu
-# - Počet kol/zápasů
-# - Konečné pořadí se všemi metrikami
-```
+- **tournament_rr_*.json** - výsledky round-robin turnajů
+- **tournament_elim_*.json** - výsledky eliminačních turnajů
 
 ---
 
 ## ✅ Optimalizace a standardy
 
 ### PEP 8 Compliance
-- ✅ Jména tříd: CamelCase (`Person`, `Match`, `Tournament`)
-- ✅ Jména funkcí/metod: snake_case (`load_players`, `save_match_results`)
+- ✅ Jména tříd: CamelCase (`Person`, `Match`, `BaseTournament`)
+- ✅ Jména funkcí/metod: snake_case (`load_players`, `save_tournament_results`)
 - ✅ Soukromé atributy: `_birth`, `_history` (single underscore)
 - ✅ Dunder metody: `__init__`, `__str__`, `__roll` (private method)
 - ✅ Max. linka 79 znaků pro kód, 72 pro komentáře
@@ -582,11 +728,23 @@ Používání type hints pro lepší čitelnost:
 def load_players(json_file: str) -> List[Player]:
     ...
 
-tournament: Tournament = Tournament(
+tournament: BaseTournament = TournamentFactory.create(
+    tournament_type="round_robin",
     players=players,
-    location="Praha",
-    tournament_type=TournamentType.ROUND_ROBIN
+    location="Praha"
 )
+```
+
+### Abstract Base Classes (ABC)
+Využití ABC modulu pro definici abstraktních tříd:
+```python
+from abc import ABC, abstractmethod
+
+class BaseTournament(ABC):
+    @abstractmethod
+    def play(self) -> None:
+        """Musí být implementováno v podtřídě."""
+        pass
 ```
 
 ### Error Handling
@@ -597,15 +755,79 @@ tournament: Tournament = Tournament(
 
 ### Code Organization
 - ✅ Moduly rozděleny dle funkce (files, game, tournament)
-- ✅ Soubor `plantuml.txt` pro vizualizaci architektury
+- ✅ Abstraktní třída jako základ hierarchie
+- ✅ Factory pattern pro vytváření objektů
+- ✅ Helper třída (TournamentPrinter) pro separaci výstupu
 - ✅ `README.md` pro dokumentaci
-- ✅ Jednoduchý `main.py` jako entry point
+- ✅ `main.py` jako entry point
 
 ---
 
 ## 🎓 Vzdělávací prvky
 
 Projekt demonstruje:
+
+1. **OOP Koncepty**
+   - Abstraktní třída (`BaseTournament`)
+   - Dědičnost (`RoundRobinTournament`, `EliminationTournament` → `BaseTournament`)
+   - Polymorfismus (metody `play()`, různé implementace)
+   - Zapouzdření (private atributy `_birth`, `_wins`)
+   - Vlastnosti (properties `gender`, `wins`)
+
+2. **Design Patterns**
+   - **Abstract Base Class** - definice rozhraní
+   - **Factory Pattern** - TournamentFactory
+   - **Helper/Utility Class** - TournamentPrinter (statické metody)
+
+3. **Python Specifika**
+   - ABC modul (`@abstractmethod`)
+   - Enum třídy (`Gender`)
+   - Statické metody (`@staticmethod`)
+   - List comprehensions
+   - Type hints
+
+4. **Algoritmy**
+   - Round-robin scheduling (rotační algoritmus)
+   - Elimination bracket (výpočet bye hráčů)
+   - Prokládání hráčů v eliminaci
+
+5. **Praktické dovednosti**
+   - Práce se soubory (JSON)
+   - Zpracování výjimek
+   - Datové struktury (Dict, List, Tuple)
+   - Formátování a tisk výstupů
+   - Automatické testování
+
+---
+
+## 🚨 Známá omezení
+
+1. **Lichý počet hráčů v Round-robin**: Jeden hráč má v každém kole "volno" (BYE)
+2. **Losování v Eliminaci**: Pořadí hráčů není náhodně mícháno
+3. **Bez persistentního DB**: Data se ukládají jen do JSON
+4. **Bez GUI**: Pouze CLI interface
+
+---
+
+## 🔮 Možná rozšíření
+
+Projekt je připraven pro rozšíření:
+- ✨ Přidání dalších typů turnajů (Swiss system, Double elimination)
+- ✨ Náhodné míchání hráčů před eliminačním turnajem
+- ✨ Web interface
+- ✨ Statistické analýzy a grafy
+- ✨ Databázové úložiště
+- ✨ Export do PDF/HTML
+
+---
+
+## 📄 Licencování
+
+Projekt je pro vzdělávací účely.
+
+---
+
+**Poslední aktualizace:** 23. února 2026
 
 1. **OOP Koncepty**
    - Dědičnost (`Player` → `Person`)
