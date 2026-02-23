@@ -3,12 +3,13 @@
 Ukazuje práci s BaseTournament a jejími podtřídami:
 - RoundRobinTournament
 - EliminationTournament
+- TournamentFactory pro vytváření turnajů
 
-Demonstruje polymorfismus a abstraktní dědičnost.
+Demonstruje polymorfismus, abstraktní dědičnost a Factory pattern.
 """
 
 from game import load_players
-from tournament_abc import RoundRobinTournament, EliminationTournament
+from tournament_abc import TournamentFactory
 
 
 def display_menu():
@@ -32,8 +33,12 @@ def get_tournament_location() -> str:
         print("Chyba: Misto musi byt zadano!")
 
 
-def run_round_robin_tournament():
-    """Spustí turnaj formou 'každý s každým'."""
+def run_tournament(tournament_type: str):
+    """Spustí turnaj podle zadaného typu pomocí TournamentFactory.
+    
+    Args:
+        tournament_type (str): Typ turnaje ("round_robin" nebo "elimination").
+    """
     try:
         players = load_players("players.json")
 
@@ -43,7 +48,9 @@ def run_round_robin_tournament():
 
         location = get_tournament_location()
 
-        tournament = RoundRobinTournament(
+        # Použití TournamentFactory
+        tournament = TournamentFactory.create(
+            tournament_type=tournament_type,
             players=players,
             location=location,
             winning_score=10,
@@ -55,41 +62,8 @@ def run_round_robin_tournament():
         tournament.print_standings()
 
         # Uložení výsledků
-        filename = f"tournament_abc_rr_{location.lower().replace(' ', '_')}.json"
-        tournament.save_tournament_results(filename)
-
-    except FileNotFoundError:
-        print("Chyba: Soubor 'players.json' nebyl nalezen!")
-    except ValueError as e:
-        print(f"Chyba: {e}")
-    except Exception as e:
-        print(f"Chyba během turnaje: {e}")
-
-
-def run_elimination_tournament():
-    """Spustí eliminační turnaj."""
-    try:
-        players = load_players("players.json")
-
-        if len(players) < 2:
-            print(f"Chyba: Pro turnaj je treba alespon 2 hraci. Nacteni: {len(players)}")
-            return
-
-        location = get_tournament_location()
-
-        tournament = EliminationTournament(
-            players=players,
-            location=location,
-            winning_score=10,
-            max_dice_value=6
-        )
-
-        print(f"\nVytvoreno: {tournament}")
-        tournament.play()
-        tournament.print_standings()
-
-        # Uložení výsledků
-        filename = f"tournament_abc_elim_{location.lower().replace(' ', '_')}.json"
+        type_abbr = "rr" if tournament_type == "round_robin" else "elim"
+        filename = f"tournament_abc_{type_abbr}_{location.lower().replace(' ', '_')}.json"
         tournament.save_tournament_results(filename)
 
     except FileNotFoundError:
@@ -107,9 +81,9 @@ def main():
         choice = input("Vaše volba (1-3): ").strip()
 
         if choice == "1":
-            run_round_robin_tournament()
+            run_tournament("round_robin")
         elif choice == "2":
-            run_elimination_tournament()
+            run_tournament("elimination")
         elif choice == "3":
             print("\nDekuji za pouziti programu!")
             break
@@ -119,3 +93,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -1,10 +1,10 @@
 """Test skript pro abstraktní turnaje - programatické spuštění.
 
-Demonstruje práci s RoundRobinTournament a EliminationTournament bez interakce.
+Demonstruje práci s TournamentFactory a polymorfismem.
 """
 
 from game import load_players
-from tournament_abc import RoundRobinTournament, EliminationTournament
+from tournament_abc import TournamentFactory, RoundRobinTournament, EliminationTournament
 
 
 def test_round_robin():
@@ -41,11 +41,11 @@ def test_round_robin():
         print(f"Počet zápasů: {len(tournament.matches)}")
         print(f"Počet detailů: {len(tournament._detailed_results)}")
         
-        print("\n✓ Round-robin test byl uspesny!")
+        print("\nOK - Round-robin test byl uspesny!")
         return True
         
     except Exception as e:
-        print(f"\n✗ Chyba při testu: {e}")
+        print(f"\nCHYBA - Chyba při testu: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -85,11 +85,11 @@ def test_elimination():
         print(f"Počet zápasů: {len(tournament.matches)}")
         print(f"Počet detailů: {len(tournament._detailed_results)}")
         
-        print("\n✓ Eliminacni test byl uspesny!")
+        print("\nOK - Eliminacni test byl uspesny!")
         return True
         
     except Exception as e:
-        print(f"\n✗ Chyba při testu: {e}")
+        print(f"\nCHYBA - Chyba při testu: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -126,11 +126,62 @@ def test_polymorphism():
             print(f"    - Kol: {tournament._get_total_rounds()}")
             print(f"    - Hráči: {[p.nickname for p in tournament.players]}")
         
-        print("\n✓ Test polymorfismu byl uspesny!")
+        print("\nOK - Test polymorfismu byl uspesny!")
         return True
         
     except Exception as e:
-        print(f"\n✗ Chyba při testu: {e}")
+        print(f"\nCHYBA - Chyba při testu: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
+def test_factory():
+    """Testuje TournamentFactory."""
+    print("\n" + "="*70)
+    print("TEST 4: TournamentFactory")
+    print("="*70)
+    
+    try:
+        players = load_players("players.json")
+        
+        if len(players) < 2:
+            print(f"Nedostatek hracu: {len(players)}")
+            return False
+        
+        # Test vytvoření pomocí Factory
+        print("\nDostupné typy turnajů:")
+        types = TournamentFactory.get_available_types()
+        for t in types:
+            print(f"  - {t}")
+        
+        # Vytvoř oba typy
+        tournaments = []
+        for tournament_type in types:
+            t = TournamentFactory.create(
+                tournament_type=tournament_type,
+                players=players,
+                location="Ostrava",
+                winning_score=2
+            )
+            tournaments.append((tournament_type, t))
+            print(f"\nVytvořeno pomocí Factory: {tournament_type}")
+            print(f"  Třída: {t.__class__.__name__}")
+            print(f"  Typ: {t._get_tournament_type_name()}")
+        
+        # Test neexistujícího typu
+        try:
+            TournamentFactory.create("neexistujici", players, "Praha")
+            print("\nCHYBA - Factory měla vyhodit ValueError!")
+            return False
+        except ValueError as e:
+            print(f"\nOK - Očekávaná výjimka: {e}")
+        
+        print("\nOK - Test TournamentFactory byl uspesny!")
+        return True
+        
+    except Exception as e:
+        print(f"\nCHYBA - Chyba při testu: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -155,6 +206,10 @@ def main():
     # Test 3
     result3 = test_polymorphism()
     results.append(("Polymorfismus", result3))
+    
+    # Test 4
+    result4 = test_factory()
+    results.append(("TournamentFactory", result4))
     
     # Shrnutí
     print("\n" + "="*70)
